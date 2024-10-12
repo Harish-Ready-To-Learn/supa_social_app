@@ -4,7 +4,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const ScreenWrapper = ({children, bg}) => {
   const {top} = useSafeAreaInsets();
-  const topPadding = top ? top + 5 : top + 20;
+  const topPadding = top ? top + 10 : top + 20;
   return (
     <View style={{flex: 1, paddingTop: topPadding, backgroundColor: bg}}>
       {children}

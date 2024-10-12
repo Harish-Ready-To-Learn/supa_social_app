@@ -36,6 +36,7 @@ const SignupScreen = ({navigation}) => {
       options: {
         data: {
           name: name,
+          email: email,
         },
       },
     });

@@ -7,26 +7,13 @@ import {useAuth} from '../context/AuthContext';
 import {supabase} from '../lib/supabase';
 import {hp, wp} from '../helpers/common';
 import Icon from '../assets/icons';
+import Avatar from '../components/common/Avatar';
 
 const HomeScreen = ({navigation}) => {
   const {colors} = useTheme();
-  const {setAuth} = useAuth();
+  const {user, setAuth} = useAuth();
 
   const [loading, setLoading] = useState(false);
-
-  const logout = async () => {
-    setLoading(true);
-    const {error} = await supabase.auth.signOut();
-    setLoading(false);
-    if (error) {
-      Alert.alert('Logout', error.message);
-    } else {
-      navigation.reset({
-        index: 0,
-        routes: [{name: 'WelcomeScreen'}],
-      });
-    }
-  };
 
   return (
     <ScreenWrapper bg={colors.background}>
@@ -53,11 +40,11 @@ const HomeScreen = ({navigation}) => {
               />
             </Pressable>
             <Pressable onPress={() => navigation.navigate('ProfileScreen')}>
-              <Icon
-                name="user"
-                size={hp(3.2)}
-                strokeWidth={2}
-                color={colors.text}
+              <Avatar
+                uri={user?.image}
+                size={hp(4.5)}
+                rounded={8}
+                style={{borderWidth: 2}}
               />
             </Pressable>
           </View>

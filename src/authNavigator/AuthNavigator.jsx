@@ -8,11 +8,12 @@ import HomeScreen from '../screens/HomeScreen';
 import {useAuth} from '../context/AuthContext';
 import {supabase} from '../lib/supabase';
 import {useNavigation} from '@react-navigation/native';
-import {getUserData} from '../lib/services/userService';
+import {getUserData} from '../services/userService';
 import Loading from '../components/common/Loading';
 import ProfileScreen from '../screens/ProfileScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import CreatePostScreen from '../screens/CreatePostScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -82,6 +83,7 @@ const AuthNavigator = () => {
         component={NotificationsScreen}
       />
       <Stack.Screen name="CreatePostScreen" component={CreatePostScreen} />
+      <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} />
     </Stack.Navigator>
   );
 };
