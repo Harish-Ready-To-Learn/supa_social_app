@@ -35,7 +35,7 @@ const AuthNavigator = () => {
   const updateUserData = async user => {
     let res = await getUserData(user?.id);
     if (res.success) {
-      setUserData(res);
+      setUserData(res?.data);
     }
   };
 

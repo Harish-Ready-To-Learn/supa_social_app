@@ -93,10 +93,10 @@ const ProfileScreen = ({navigation}) => {
             {/* User name and Address */}
             <View style={{alignItems: 'center', gap: 4}}>
               <Text style={[styles.userName, {color: colors.text}]}>
-                {user && user?.data?.name}
+                {user && user?.name}
               </Text>
               <Text style={[styles.infoText, {color: colors.text}]}>
-                {user && user?.data?.address}
+                {user && user?.address}
               </Text>
             </View>
             {/* email, phone and bip */}
@@ -104,20 +104,20 @@ const ProfileScreen = ({navigation}) => {
               <View style={styles.info}>
                 <Icon name="mail" size={20} color={colors.text} />
                 <Text style={[styles.infoText, {color: colors.text}]}>
-                  {user && user?.data?.email}
+                  {user && user?.email}
                 </Text>
               </View>
-              {user && user.data.phoneNumber && (
+              {user && user?.phoneNumber && (
                 <View style={styles.info}>
-                  <Icon name="call" size={20} col or={colors.text} />
+                  <Icon name="call" size={20} color={colors.text} />
                   <Text style={[styles.infoText, {color: colors.text}]}>
-                    {user?.data?.phoneNumber}
+                    {user?.phoneNumber}
                   </Text>
                 </View>
               )}
-              {user && user.data.bio && (
+              {user && user?.bio && (
                 <Text style={[styles.infoText, {color: colors.text}]}>
-                  {user?.data?.bio}
+                  {user?.bio}
                 </Text>
               )}
             </View>
