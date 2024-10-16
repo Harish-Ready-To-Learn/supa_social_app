@@ -6,18 +6,22 @@ import {
   Text,
   View,
 } from 'react-native';
-import React, {useEffect, useReducer, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import ScreenWrapper from '../components/common/ScreenWrapper';
 import {useTheme} from '@react-navigation/native';
 import Header from '../components/common/Header';
 import {hp, wp} from '../helpers/common';
 import {useAuth} from '../context/AuthContext';
 import FastImage from 'react-native-fast-image';
-import {getUserImageSource} from '../services/imageService';
+import {getUserImageSource, uploadProfileImage} from '../services/imageService';
 import Icon from '../assets/icons';
 import CustomTextInput from '../components/common/CustomTextInput';
 import CustomButton from '../components/common/CustomButton';
 import {updateUser} from '../services/userService';
+import ImagePicker from 'react-native-image-crop-picker';
+import {supabase} from '../lib/supabase';
+import RNFS from 'react-native-fs';
+import {Buffer} from 'buffer';
 
 const EditProfileScreen = ({navigation}) => {
   const {colors} = useTheme();
@@ -43,8 +47,19 @@ const EditProfileScreen = ({navigation}) => {
     }
   }, [currentUser]);
 
-  const onPickImage = async () => {};
-
+  const onPickImage = async () => {
+    await ImagePicker.openPicker({
+      width: 300,
+      height: 400,
+      cropping: true,
+    })
+      .then(image => {
+        setUserDetails({...userDetails, image: image.path});
+      })
+      .catch(error => {
+        console.log('Error picking image:', error);
+      });
+  };
   const onSubmit = async () => {
     let userData = {...userDetails};
     let {name, phoneNumber, address, image, bio} = userData;
@@ -54,6 +69,12 @@ const EditProfileScreen = ({navigation}) => {
       return;
     }
     setLoading(true);
+    if (image != currentUser.image) {
+      let imageUploadRes = await uploadProfileImage(image, currentUser?.id);
+      if (imageUploadRes.success) {
+        userData.image = imageUploadRes.data;
+      }
+    }
     const res = await updateUser(currentUser?.id, userData);
     setLoading(false);
     console.log(res);
@@ -82,9 +103,12 @@ const EditProfileScreen = ({navigation}) => {
             <View style={[styles.avatarContainer, {}]}>
               <FastImage
                 source={{
-                  uri: userDetails?.image
-                    ? getUserImageSource(userDetails?.image)
-                    : undefined, // Profile image URL
+                  uri:
+                    userDetails?.image != currentUser.image
+                      ? userDetails?.image
+                      : userDetails?.image
+                      ? getUserImageSource(userDetails?.image)
+                      : undefined, // Profile image URL
                   priority: FastImage.priority.high,
                 }}
                 style={[styles.avatar, {borderColor: colors.text}]}
