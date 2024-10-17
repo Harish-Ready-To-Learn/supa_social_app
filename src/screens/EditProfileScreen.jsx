@@ -77,7 +77,6 @@ const EditProfileScreen = ({navigation}) => {
     }
     const res = await updateUser(currentUser?.id, userData);
     setLoading(false);
-    console.log(res);
     if (res.success) {
       setUserData({...currentUser, ...userData});
       navigation.goBack();

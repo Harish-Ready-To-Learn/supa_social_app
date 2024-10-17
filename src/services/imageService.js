@@ -3,8 +3,6 @@ import RNFS from 'react-native-fs';
 import {Buffer} from 'buffer';
 
 export const getUserImageSource = imagePath => {
-  console.log(imagePath);
-  console.log(getSupabseProfileImage(imagePath));
   if (imagePath) {
     return getSupabseProfileImage(imagePath);
   } else {
