@@ -7,13 +7,13 @@ import {getUserImageSource} from '../../services/imageService';
 
 const Avatar = ({uri, size = hp(4.5), rounded = 10, style = {}}) => {
   const {colors} = useTheme();
-
   return (
     <FastImage
-      source={{
-        uri: uri ? getUserImageSource(uri) : undefined, // Profile image URL
-        priority: FastImage.priority.high,
-      }}
+      source={
+        uri
+          ? {uri: getUserImageSource(uri), priority: FastImage.priority.high}
+          : require('../../assets/images/defaultUser.png')
+      }
       style={[
         styles.avatar,
         {
@@ -24,7 +24,6 @@ const Avatar = ({uri, size = hp(4.5), rounded = 10, style = {}}) => {
         },
         style,
       ]}
-      defaultSource={require('../../assets/images/defaultUser.png')}
       resizeMode={FastImage.resizeMode.cover}
     />
   );

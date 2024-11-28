@@ -19,9 +19,6 @@ import CustomTextInput from '../components/common/CustomTextInput';
 import CustomButton from '../components/common/CustomButton';
 import {updateUser} from '../services/userService';
 import ImagePicker from 'react-native-image-crop-picker';
-import {supabase} from '../lib/supabase';
-import RNFS from 'react-native-fs';
-import {Buffer} from 'buffer';
 
 const EditProfileScreen = ({navigation}) => {
   const {colors} = useTheme();
@@ -101,17 +98,18 @@ const EditProfileScreen = ({navigation}) => {
           <View style={styles.form}>
             <View style={[styles.avatarContainer, {}]}>
               <FastImage
-                source={{
-                  uri:
-                    userDetails?.image != currentUser.image
-                      ? userDetails?.image
-                      : userDetails?.image
-                      ? getUserImageSource(userDetails?.image)
-                      : undefined, // Profile image URL
-                  priority: FastImage.priority.high,
-                }}
+                source={
+                  userDetails?.image
+                    ? {
+                        uri:
+                          userDetails.image === currentUser.image
+                            ? getUserImageSource(userDetails.image)
+                            : userDetails.image,
+                        priority: FastImage.priority.high,
+                      }
+                    : require('../assets/images/defaultUser.png') // Fallback to default image if URI is undefined
+                }
                 style={[styles.avatar, {borderColor: colors.text}]}
-                defaultSource={require('../assets/images/defaultUser.png')}
                 resizeMode={FastImage.resizeMode.cover}
               />
               <Pressable
@@ -144,6 +142,7 @@ const EditProfileScreen = ({navigation}) => {
                 setUserDetails({...userDetails, phoneNumber: value});
               }}
               value={userDetails?.phoneNumber}
+              maxLength={10}
             />
             <CustomTextInput
               icon={<Icon name="location" />}
