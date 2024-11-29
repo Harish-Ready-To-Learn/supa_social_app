@@ -2,17 +2,19 @@ import {supabase} from '../lib/supabase';
 import RNFS from 'react-native-fs';
 import {Buffer} from 'buffer';
 
-export const getUserImageSource = imagePath => {
+export const getUserImageSource = (imagePath, isPost = false) => {
   if (imagePath) {
-    return getSupabseProfileImage(imagePath);
+    return getSupabseProfileImage(imagePath, isPost);
   } else {
     return require('../assets/images/defaultUser.png');
   }
 };
 
-export const getSupabseProfileImage = filePath => {
+export const getSupabseProfileImage = (filePath, isPost) => {
   if (filePath) {
-    return `https://bipaeijxntmtlvzdbrzm.supabase.co/storage/v1/object/public/user_profile_image/${filePath}`;
+    return `https://bipaeijxntmtlvzdbrzm.supabase.co/storage/v1/object/public/${
+      isPost ? 'posts' : 'user_profile_image'
+    }/${filePath}`;
   }
   return null;
 };

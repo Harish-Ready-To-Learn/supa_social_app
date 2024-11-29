@@ -1,4 +1,5 @@
 import {
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -19,6 +20,8 @@ import CustomButton from '../components/common/CustomButton';
 import ImagePicker from 'react-native-image-crop-picker';
 import FastImage from 'react-native-fast-image';
 import VideoPlayer from 'react-native-video-controls';
+import {createOrUpdatePost} from '../services/postService';
+import {getUserImageSource} from '../services/imageService';
 
 const CreatePostScreen = ({navigation}) => {
   const {colors} = useTheme();
@@ -72,7 +75,26 @@ const CreatePostScreen = ({navigation}) => {
   };
 
   const onSubmit = async () => {
-    console.log('body: ', bodyRef.current);
+    if (!bodyRef.current && !file) {
+      Alert.alert('Post', 'Please choose an image or add the post body.');
+      return;
+    }
+
+    let data = {
+      file,
+      body: bodyRef.current,
+      userId: user?.id,
+    };
+    setLoading(true);
+    const result = await createOrUpdatePost(data);
+    setLoading(false);
+    if (result.success) {
+      bodyRef.current = '';
+      editorRef.current?.setContentHTML('');
+      navigation.goBack();
+    } else {
+      Alert.alert('Post', result.msg);
+    }
   };
 
   return (
@@ -115,7 +137,7 @@ const CreatePostScreen = ({navigation}) => {
                   source={{
                     uri: isLocalFile(file)
                       ? file.path
-                      : getUserImageSource(file),
+                      : getUserImageSource(file, (isPost = true)),
                   }}
                   style={{flex: 1}}
                   disableBack={true}
@@ -126,7 +148,7 @@ const CreatePostScreen = ({navigation}) => {
                     {
                       uri: isLocalFile(file)
                         ? file.path
-                        : getUserImageSource(file),
+                        : getUserImageSource(file, (isPost = true)),
                       priority: FastImage.priority.high,
                     } // Fallback to default image if URI is undefined
                   }
