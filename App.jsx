@@ -1,4 +1,11 @@
-import {Appearance, StyleSheet, Text, useColorScheme, View} from 'react-native';
+import {
+  Appearance,
+  LogBox,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View,
+} from 'react-native';
 import React, {useEffect} from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {NavigationContainer} from '@react-navigation/native';
@@ -18,6 +25,13 @@ const App = () => {
       subscription.remove(); // Clean up listener when component unmounts
     };
   }, []);
+
+  LogBox.ignoreLogs([
+    'Warning: TNodeChildrenRenderer',
+    'Warning: MemoizedTNodeRenderer',
+    'Warning: TRenderEngineProvider',
+  ]);
+
   return (
     <AuthProvider>
       <NavigationContainer theme={scheme === 'dark' ? darkTheme : lightTheme}>

@@ -1,5 +1,5 @@
-import {Alert, Pressable, StyleSheet, Text, View} from 'react-native';
-import React, {useState} from 'react';
+import {Alert, FlatList, Pressable, StyleSheet, Text, View} from 'react-native';
+import React, {useState, useEffect} from 'react';
 import ScreenWrapper from '../components/common/ScreenWrapper';
 import CustomButton from '../components/common/CustomButton';
 import {useTheme} from '@react-navigation/native';
@@ -8,12 +8,28 @@ import {supabase} from '../lib/supabase';
 import {hp, wp} from '../helpers/common';
 import Icon from '../assets/icons';
 import Avatar from '../components/common/Avatar';
+import {fetchPosts} from '../services/postService';
+import PostCard from '../components/home/PostCard';
 
+var limit = 0;
 const HomeScreen = ({navigation}) => {
   const {colors} = useTheme();
   const {user, setAuth} = useAuth();
 
+  const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    getPosts();
+  }, []);
+
+  const getPosts = async () => {
+    limit = limit + 10;
+    let {success, data} = await fetchPosts(limit);
+    if (success) {
+      setPosts(data);
+    }
+  };
 
   return (
     <ScreenWrapper bg={colors.background}>
@@ -49,6 +65,15 @@ const HomeScreen = ({navigation}) => {
             </Pressable>
           </View>
         </View>
+        <FlatList
+          data={posts}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listStyle}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({item}) => (
+            <PostCard item={item} currentUser={user} navigation={navigation} />
+          )}
+        />
       </View>
     </ScreenWrapper>
   );
@@ -76,5 +101,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 18,
+  },
+  listStyle: {
+    paddingTop: 20,
+    paddingHorizontal: wp(4),
   },
 });

@@ -70,3 +70,29 @@ const uploadFile = async (folderName, filePath, isImage, userId) => {
     return {success: false, msg: 'could not upload image.'};
   }
 };
+
+export const fetchPosts = async (limit = 10) => {
+  try {
+    const {data, error} = await supabase
+      .from('posts')
+      .select(
+        `
+        *,
+        user: users (id, name, image)
+        `,
+      )
+      .order('created_at', {ascending: false})
+      .limit(limit);
+
+    if (error) {
+      console.log('got error while fetching Posts => ', error);
+      return {success: false, msg: 'could not fetch posts.'};
+    }
+    return {success: true, data: data};
+  } catch (error) {
+    console.log('====================================');
+    console.log('got error while fetching Posts => ', error);
+    console.log('====================================');
+    return {success: false, msg: 'Could not fetch the posts.'};
+  }
+};
