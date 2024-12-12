@@ -19,6 +19,7 @@ import Avatar from '../components/common/Avatar';
 import {fetchPosts} from '../services/postService';
 import PostCard from '../components/home/PostCard';
 import Loading from '../components/common/Loading';
+import {getUserData} from '../services/userService';
 
 var limit = 0;
 const HomeScreen = ({navigation}) => {
@@ -32,11 +33,31 @@ const HomeScreen = ({navigation}) => {
 
   const viewabilityConfig = {itemVisiblePercentThreshold: 250};
 
-  useEffect(() => {
-    if (isFocused) {
-      getPosts();
+  const handlePostEvent = async payload => {
+    if (payload.eventType == 'INSERT' && payload?.new?.id) {
+      let newPost = {...payload.new};
+      let res = await getUserData(newPost.userId);
+      newPost.user = res.success ? res.data : {};
+      setPosts(prevPosts => [newPost, ...prevPosts]);
     }
-  }, [isFocused]);
+  };
+
+  useEffect(() => {
+    let postChannel = supabase
+      .channel('posts')
+      .on(
+        'postgres_changes',
+        {event: '*', schema: 'public', table: 'posts'},
+        handlePostEvent,
+      )
+      .subscribe();
+
+    getPosts();
+
+    return () => {
+      supabase.removeChannel(postChannel);
+    };
+  }, []);
 
   const getPosts = async () => {
     limit = limit + 10;
