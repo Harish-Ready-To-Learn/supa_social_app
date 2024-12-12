@@ -14,6 +14,7 @@ import ProfileScreen from '../screens/ProfileScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import CreatePostScreen from '../screens/CreatePostScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
+import Dummy from '../screens/Dummy';
 
 const Stack = createNativeStackNavigator();
 
@@ -84,6 +85,7 @@ const AuthNavigator = () => {
       />
       <Stack.Screen name="CreatePostScreen" component={CreatePostScreen} />
       <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} />
+      <Stack.Screen name="dummy" component={Dummy} />
     </Stack.Navigator>
   );
 };

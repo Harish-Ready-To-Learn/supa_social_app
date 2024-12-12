@@ -30,6 +30,8 @@ const App = () => {
     'Warning: TNodeChildrenRenderer',
     'Warning: MemoizedTNodeRenderer',
     'Warning: TRenderEngineProvider',
+    'Warning: bound renderChildren',
+    'You seem to update',
   ]);
 
   return (

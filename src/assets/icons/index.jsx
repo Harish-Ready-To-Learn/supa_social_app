@@ -5,6 +5,7 @@ import Mail from './Mail';
 import Lock from './Lock';
 import User from './User';
 import Heart from './Heart';
+import HeartFill from './HeartFill';
 import Plus from './Plus';
 import Search from './Search';
 import Location from './Location';
@@ -29,6 +30,7 @@ const icons = {
   lock: Lock,
   user: User,
   heart: Heart,
+  heartFill: HeartFill,
   plus: Plus,
   search: Search,
   location: Location,

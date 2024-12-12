@@ -1,8 +1,16 @@
-import {Alert, FlatList, Pressable, StyleSheet, Text, View} from 'react-native';
-import React, {useState, useEffect} from 'react';
+import {
+  Alert,
+  Dimensions,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import React, {useState, useEffect, useLayoutEffect, useRef} from 'react';
 import ScreenWrapper from '../components/common/ScreenWrapper';
 import CustomButton from '../components/common/CustomButton';
-import {useTheme} from '@react-navigation/native';
+import {useTheme, useIsFocused} from '@react-navigation/native';
 import {useAuth} from '../context/AuthContext';
 import {supabase} from '../lib/supabase';
 import {hp, wp} from '../helpers/common';
@@ -10,18 +18,25 @@ import Icon from '../assets/icons';
 import Avatar from '../components/common/Avatar';
 import {fetchPosts} from '../services/postService';
 import PostCard from '../components/home/PostCard';
+import Loading from '../components/common/Loading';
 
 var limit = 0;
 const HomeScreen = ({navigation}) => {
+  const isFocused = useIsFocused();
   const {colors} = useTheme();
   const {user, setAuth} = useAuth();
 
   const [posts, setPosts] = useState([]);
+  const [visibleItem, setVisibleItem] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const viewabilityConfig = {itemVisiblePercentThreshold: 250};
+
   useEffect(() => {
-    getPosts();
-  }, []);
+    if (isFocused) {
+      getPosts();
+    }
+  }, [isFocused]);
 
   const getPosts = async () => {
     limit = limit + 10;
@@ -29,7 +44,14 @@ const HomeScreen = ({navigation}) => {
     if (success) {
       setPosts(data);
     }
+    setLoading(false);
   };
+
+  const onViewableItemsChanged = useRef(({viewableItems}) => {
+    if (viewableItems.length > 0) {
+      setVisibleItem(viewableItems[0]?.item?.id); // Set the first visible item
+    }
+  }).current;
 
   return (
     <ScreenWrapper bg={colors.background}>
@@ -68,11 +90,25 @@ const HomeScreen = ({navigation}) => {
         <FlatList
           data={posts}
           showsVerticalScrollIndicator={false}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
+          decelerationRate="normal"
           contentContainerStyle={styles.listStyle}
           keyExtractor={item => item.id.toString()}
           renderItem={({item}) => (
-            <PostCard item={item} currentUser={user} navigation={navigation} />
+            <PostCard
+              item={item}
+              currentUser={user}
+              navigation={navigation}
+              isVisible={item.id === visibleItem}
+              isScreenFocused={isFocused}
+            />
           )}
+          ListFooterComponent={
+            <View style={{marginVertical: 30}}>
+              <Loading />
+            </View>
+          }
         />
       </View>
     </ScreenWrapper>
@@ -104,6 +140,6 @@ const styles = StyleSheet.create({
   },
   listStyle: {
     paddingTop: 20,
-    paddingHorizontal: wp(4),
+    paddingHorizontal: wp(2),
   },
 });

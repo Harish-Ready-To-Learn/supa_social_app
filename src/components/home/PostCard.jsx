@@ -1,15 +1,59 @@
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import React from 'react';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
 import {useTheme} from '@react-navigation/native';
 import Avatar from '../common/Avatar';
 import {hp, wp} from '../../helpers/common';
 import moment from 'moment';
 import Icon from '../../assets/icons';
 import RenderHtml from 'react-native-render-html';
+import FastImage from 'react-native-fast-image';
+import {getUserImageSource} from '../../services/imageService';
+// import VideoPlayer from 'react-native-video-controls';
+import Video from 'react-native-video';
+import {
+  TapGestureHandler,
+  State,
+  GestureHandlerRootView,
+} from 'react-native-gesture-handler';
 
-const PostCard = ({item, currentUser, navigation, hasShadow = true}) => {
+let timer = null;
+const TIMEOUT = 500;
+const debounce = (onSingle, onDouble) => {
+  if (timer) {
+    clearTimeout(timer);
+    timer = null;
+    onDouble();
+  } else {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      timer = null;
+      onSingle();
+    }, TIMEOUT);
+  }
+};
+
+const PostCard = ({
+  item,
+  currentUser,
+  navigation,
+  hasShadow = true,
+  isVisible,
+  isScreenFocused,
+}) => {
   const {colors} = useTheme();
   const styles = createStyles(colors);
+  const videoPlayerRef = useRef(null);
+  const doubleTapRef = useRef(null);
+  const [liked, setLiked] = useState(false);
+  const [likes, setLikes] = useState([]);
+  const [tap, setTap] = useState('...');
+  const [paused, setPaused] = useState(!isScreenFocused);
 
   const textStyles = {
     color: colors.text,
@@ -33,12 +77,56 @@ const PostCard = ({item, currentUser, navigation, hasShadow = true}) => {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
+    shadowOpacity: 0.4,
+    shadowRadius: 5,
     elevation: 1,
   };
 
+  useEffect(() => {
+    if (!isVisible || !isScreenFocused) {
+      setPaused(true);
+    } else {
+      setPaused(false);
+    }
+  }, [isVisible, isScreenFocused]);
+
+  useEffect(() => {
+    if (tap === 'double tap') {
+      setLiked(true); // Trigger like on double tap
+    }
+    setTimeout(() => {
+      setTap('...');
+    }, 2000); // Reset tap state after 2 seconds
+  }, [tap]);
+
   const createdAt = moment(item?.created_at).format('MMM D');
+
+  const onSingleTap = () => {
+    setPaused(prev => !prev); // Toggle play/pause on single tap
+  };
+
+  const onDoubleTap = () => {
+    setTap('double tap'); // Set tap state to double tap when double-tapped
+  };
+
+  const debounce = (onSingle, onDouble) => {
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+      onDouble(); // Execute double tap logic if timer is cleared
+    } else {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        timer = null;
+        onSingle(); // Execute single tap logic after timeout
+      }, TIMEOUT);
+    }
+  };
+
+  const onLike = () => {
+    debounce(onSingleTap, onDoubleTap); // Handle both single and double taps
+  };
+
   const openPostDetails = () => {};
 
   return (
@@ -72,6 +160,73 @@ const PostCard = ({item, currentUser, navigation, hasShadow = true}) => {
             />
           )}
         </View>
+
+        <Pressable onPress={onLike}>
+          {item?.file && item?.file?.includes('postImage') && (
+            <FastImage
+              source={{
+                uri: getUserImageSource(item?.file, true),
+                priority: FastImage.priority.high,
+              }}
+              style={styles.postMedia}
+              resizeMode="cover"
+            />
+          )}
+
+          {item?.file && item?.file?.includes('postVideo') && (
+            <GestureHandlerRootView>
+              <TapGestureHandler waitFor={doubleTapRef}>
+                <TapGestureHandler
+                  onHandlerStateChange={({nativeEvent}) => {
+                    if (nativeEvent.state === State.ACTIVE) {
+                      setTap('double tap'); // Trigger double tap logic
+                    }
+                  }}
+                  numberOfTaps={2}
+                  ref={doubleTapRef}>
+                  <View>
+                    <Video
+                      ref={videoPlayerRef}
+                      source={{uri: getUserImageSource(item?.file, true)}}
+                      style={styles.postMedia}
+                      paused={paused} // Control play/pause based on the state
+                      resizeMode="cover"
+                      repeat
+                    />
+                  </View>
+                </TapGestureHandler>
+              </TapGestureHandler>
+            </GestureHandlerRootView>
+          )}
+        </Pressable>
+      </View>
+      <View style={styles.footer}>
+        <View style={styles.footerButton}>
+          <TouchableOpacity onPress={() => setLiked(!liked)}>
+            {liked ? (
+              <Icon
+                name="heartFill"
+                size={24}
+                fill={colors.error}
+                color={colors.error}
+              />
+            ) : (
+              <Icon name="heart" size={24} color={colors.text} />
+            )}
+          </TouchableOpacity>
+          <Text style={styles.count}>{likes?.length}</Text>
+        </View>
+        <View style={styles.footerButton}>
+          <TouchableOpacity onPress={() => setLiked(!liked)}>
+            <Icon name="comment" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.count}>{0}</Text>
+        </View>
+        <View style={styles.footerButton}>
+          <TouchableOpacity onPress={() => setLiked(!liked)}>
+            <Icon name="share" size={24} color={colors.text} />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -89,7 +244,6 @@ const createStyles = colors =>
       padding: 10,
       paddingVertical: 12,
       backgroundColor: colors.background,
-      borderWidth: 0.5,
       borderColor: colors.text,
       shadowColor: colors.text,
     },
@@ -101,5 +255,47 @@ const createStyles = colors =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
+    },
+    content: {
+      gap: 10,
+    },
+    postMedia: {
+      height: hp(40),
+      width: '100%',
+      borderRadius: 20,
+      borderCurve: 'continuous',
+    },
+    postBody: {
+      marginLeft: 5,
+    },
+    userName: {
+      fontSize: hp(1.8),
+      color: colors.text,
+      fontWeight: '800',
+    },
+    postTime: {
+      fontSize: hp(1.4),
+      color: colors.placeHolderTextcolor,
+      fontWeight: '500',
+    },
+    footer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 15,
+    },
+    footerButton: {
+      marginLeft: 5,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    actions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 18,
+    },
+    count: {
+      color: colors.text,
+      fontSize: hp(1.8),
     },
   });
