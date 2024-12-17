@@ -25,10 +25,12 @@ var limit = 0;
 const HomeScreen = ({navigation}) => {
   const isFocused = useIsFocused();
   const {colors} = useTheme();
+  const styles = createStyles(colors);
   const {user, setAuth} = useAuth();
 
   const [posts, setPosts] = useState([]);
   const [visibleItem, setVisibleItem] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
 
   const viewabilityConfig = {itemVisiblePercentThreshold: 250};
@@ -38,6 +40,7 @@ const HomeScreen = ({navigation}) => {
       let newPost = {...payload.new};
       let res = await getUserData(newPost.userId);
       newPost.user = res.success ? res.data : {};
+      newPost.postLikes = [];
       setPosts(prevPosts => [newPost, ...prevPosts]);
     }
   };
@@ -60,9 +63,11 @@ const HomeScreen = ({navigation}) => {
   }, []);
 
   const getPosts = async () => {
+    if (!hasMore) return null;
     limit = limit + 10;
     let {success, data} = await fetchPosts(limit);
     if (success) {
+      if (posts.length == data.length) setHasMore(false);
       setPosts(data);
     }
     setLoading(false);
@@ -126,10 +131,19 @@ const HomeScreen = ({navigation}) => {
             />
           )}
           ListFooterComponent={
-            <View style={{marginVertical: 30}}>
-              <Loading />
-            </View>
+            hasMore ? (
+              <View style={{marginVertical: 30}}>
+                <Loading />
+              </View>
+            ) : (
+              <View style={{marginVertical: 30}}>
+                <Text style={styles.noPosts}>No More Posts...!</Text>
+              </View>
+            )
           }
+          onEndReached={() => {
+            getPosts();
+          }}
         />
       </View>
     </ScreenWrapper>
@@ -138,29 +152,35 @@ const HomeScreen = ({navigation}) => {
 
 export default HomeScreen;
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: wp(4),
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  title: {
-    fontSize: hp(3.2),
-    fontWeight: '900',
-  },
-  icons: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 18,
-  },
-  listStyle: {
-    paddingTop: 20,
-    paddingHorizontal: wp(2),
-  },
-});
+const createStyles = colors =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      paddingHorizontal: wp(4),
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 10,
+    },
+    title: {
+      fontSize: hp(3.2),
+      fontWeight: '900',
+    },
+    icons: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 18,
+    },
+    listStyle: {
+      paddingTop: 20,
+      paddingHorizontal: wp(2),
+    },
+    noPosts: {
+      fontSize: hp(2),
+      textAlign: 'center',
+      color: colors.text,
+    },
+  });

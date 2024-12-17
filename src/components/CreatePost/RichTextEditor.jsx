@@ -1,4 +1,4 @@
-import {StyleSheet, Text, View} from 'react-native';
+import {ScrollView, StyleSheet, Text, View} from 'react-native';
 import React from 'react';
 import {useTheme} from '@react-navigation/native';
 import {actions, RichEditor, RichToolbar} from 'react-native-pell-rich-editor';
@@ -46,6 +46,8 @@ const RichTextEditor = ({editorRef, onChangeBodyText}) => {
         editorStyle={styles.richEditorStyle}
         placeholder={"What's on your mind?"}
         onChange={onChangeBodyText}
+        androidLayerType="software"
+        androidHardwareAccelerationDisabled={true}
       />
     </View>
   );

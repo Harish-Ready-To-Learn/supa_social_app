@@ -36,6 +36,8 @@ const CreatePostScreen = ({navigation}) => {
   const onPick = async isImage => {
     const options = {
       mediaType: isImage ? 'photo' : 'video',
+      // includeBase64: false, // Ensure base64 isn't being used
+      // compressVideoPreset: 'Passthrough', // Avoid compression
     };
 
     if (isImage) {

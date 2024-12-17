@@ -419,6 +419,7 @@
 			baseConfigurationReference = 5B7EB9410499542E8C5724F5 /* Pods-supa_social_app-supa_social_appTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -446,6 +447,7 @@
 			baseConfigurationReference = 89C6BE57DB24E9ADA2F236DE /* Pods-supa_social_app-supa_social_appTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				COPY_PHASE_STRIP = NO;
 				INFOPLIST_FILE = supa_social_appTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.4;

@@ -1,5 +1,7 @@
 import {
+  Alert,
   Pressable,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -8,7 +10,7 @@ import {
 import React, {useEffect, useRef, useState} from 'react';
 import {useTheme} from '@react-navigation/native';
 import Avatar from '../common/Avatar';
-import {hp, wp} from '../../helpers/common';
+import {hp, stripHtmlTags, wp} from '../../helpers/common';
 import moment from 'moment';
 import Icon from '../../assets/icons';
 import RenderHtml from 'react-native-render-html';
@@ -21,6 +23,7 @@ import {
   State,
   GestureHandlerRootView,
 } from 'react-native-gesture-handler';
+import {createPostLikes, removePostLike} from '../../services/postService';
 
 let timer = null;
 const TIMEOUT = 500;
@@ -83,6 +86,15 @@ const PostCard = ({
   };
 
   useEffect(() => {
+    setLikes(item?.postLikes);
+    setLiked(
+      item?.postLikes?.filter(like => like.userId == currentUser?.id)[0]
+        ? true
+        : false,
+    );
+  }, []);
+
+  useEffect(() => {
     if (!isVisible || !isScreenFocused) {
       setPaused(true);
     } else {
@@ -92,11 +104,9 @@ const PostCard = ({
 
   useEffect(() => {
     if (tap === 'double tap') {
-      setLiked(true); // Trigger like on double tap
+      onLike();
     }
-    setTimeout(() => {
-      setTap('...');
-    }, 2000); // Reset tap state after 2 seconds
+    setTap('...'); // Reset tap state after 2 seconds
   }, [tap]);
 
   const createdAt = moment(item?.created_at).format('MMM D');
@@ -123,11 +133,50 @@ const PostCard = ({
     }
   };
 
-  const onLike = () => {
+  const onTapPost = () => {
     debounce(onSingleTap, onDoubleTap); // Handle both single and double taps
   };
 
-  const openPostDetails = () => {};
+  const onLike = async () => {
+    if (tap == 'double tap' && liked) {
+      return;
+    }
+    if (liked) {
+      let updatedLikes = likes.filter(like => like.userId != currentUser?.id);
+      setLikes([...updatedLikes]);
+      let res = await removePostLike(item?.id, currentUser?.id);
+      if (!res.success) {
+        Alert.alert('Post', 'Remove Like Error..!');
+      }
+      setLiked(false);
+    } else {
+      let data = {
+        userId: currentUser?.id,
+        postId: item?.id,
+      };
+      setLikes([...likes, data]);
+      let res = await createPostLikes(data);
+      if (!res.success) {
+        Alert.alert('Post', 'Something went wrong..!');
+      }
+      setLiked(true);
+    }
+  };
+
+  const openPostDetails = () => {
+    navigation.navigate('PostDetailsScreen', {
+      pathName: 'postDetails',
+      postId: item?.id,
+    });
+  };
+
+  const onShare = async () => {
+    let content = {message: stripHtmlTags(item?.body)};
+    if (item?.file) {
+      content.url = getUserImageSource(item?.file, true);
+    }
+    Share.share(content);
+  };
 
   return (
     <View style={[styles.container, hasShadow && shadowStyles]}>
@@ -161,7 +210,7 @@ const PostCard = ({
           )}
         </View>
 
-        <Pressable onPress={onLike}>
+        <Pressable onPress={onTapPost}>
           {item?.file && item?.file?.includes('postImage') && (
             <FastImage
               source={{
@@ -202,7 +251,7 @@ const PostCard = ({
       </View>
       <View style={styles.footer}>
         <View style={styles.footerButton}>
-          <TouchableOpacity onPress={() => setLiked(!liked)}>
+          <TouchableOpacity onPress={() => onLike()}>
             {liked ? (
               <Icon
                 name="heartFill"
@@ -217,13 +266,13 @@ const PostCard = ({
           <Text style={styles.count}>{likes?.length}</Text>
         </View>
         <View style={styles.footerButton}>
-          <TouchableOpacity onPress={() => setLiked(!liked)}>
+          <TouchableOpacity onPress={() => openPostDetails()}>
             <Icon name="comment" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.count}>{0}</Text>
         </View>
         <View style={styles.footerButton}>
-          <TouchableOpacity onPress={() => setLiked(!liked)}>
+          <TouchableOpacity onPress={() => onShare()}>
             <Icon name="share" size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
