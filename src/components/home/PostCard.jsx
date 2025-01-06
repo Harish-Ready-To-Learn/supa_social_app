@@ -48,6 +48,7 @@ const PostCard = ({
   hasShadow = true,
   isVisible,
   isScreenFocused,
+  showMoreIcons = true,
 }) => {
   const {colors} = useTheme();
   const styles = createStyles(colors);
@@ -164,6 +165,7 @@ const PostCard = ({
   };
 
   const openPostDetails = () => {
+    if (!showMoreIcons) return;
     navigation.navigate('PostDetailsScreen', {
       pathName: 'postDetails',
       postId: item?.id,
@@ -188,14 +190,16 @@ const PostCard = ({
             <Text style={styles.postTime}>{createdAt}</Text>
           </View>
         </View>
-        <TouchableOpacity onPress={openPostDetails}>
-          <Icon
-            name="threeDotsHorizontal"
-            size={hp(3.4)}
-            strokeWidth={3}
-            color={colors.text}
-          />
-        </TouchableOpacity>
+        {showMoreIcons && (
+          <TouchableOpacity onPress={openPostDetails}>
+            <Icon
+              name="threeDotsHorizontal"
+              size={hp(3.4)}
+              strokeWidth={3}
+              color={colors.text}
+            />
+          </TouchableOpacity>
+        )}
       </View>
       <View style={styles.content}>
         <View style={styles.postBody}>
@@ -233,7 +237,7 @@ const PostCard = ({
                   }}
                   numberOfTaps={2}
                   ref={doubleTapRef}>
-                  <View>
+                  <View style={styles.postMedia}>
                     <Video
                       ref={videoPlayerRef}
                       source={{uri: getUserImageSource(item?.file, true)}}
@@ -266,9 +270,9 @@ const PostCard = ({
           <Text style={styles.count}>{likes?.length}</Text>
         </View>
         <View style={styles.footerButton}>
-          <TouchableOpacity onPress={() => openPostDetails()}>
+          <Pressable onPress={() => openPostDetails()}>
             <Icon name="comment" size={24} color={colors.text} />
-          </TouchableOpacity>
+          </Pressable>
           <Text style={styles.count}>{0}</Text>
         </View>
         <View style={styles.footerButton}>
