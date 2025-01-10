@@ -49,6 +49,9 @@ const PostCard = ({
   isVisible,
   isScreenFocused,
   showMoreIcons = true,
+  showDelete = false,
+  onDeletePost = () => {},
+  onEditPost = () => {},
 }) => {
   const {colors} = useTheme();
   const styles = createStyles(colors);
@@ -180,8 +183,28 @@ const PostCard = ({
     Share.share(content);
   };
 
+  const handleDeletePost = () => {
+    Alert.alert('Confirm', 'Are you sure you want to delete the comment?', [
+      {
+        text: 'Cancel',
+        onPress: () => {},
+        style: 'cancel',
+      },
+      {
+        text: 'yes',
+        onPress: () => onDeletePost(item),
+        style: 'destructive',
+      },
+    ]);
+  };
+
   return (
-    <View style={[styles.container, hasShadow && shadowStyles]}>
+    <View
+      style={[
+        styles.container,
+        hasShadow && shadowStyles,
+        {marginTop: showMoreIcons ? 0 : 5},
+      ]}>
       <View style={styles.header}>
         <View style={styles.userInfo}>
           <Avatar uri={item?.user?.image} size={hp(4.5)} rounded={8} />
@@ -199,6 +222,17 @@ const PostCard = ({
               color={colors.text}
             />
           </TouchableOpacity>
+        )}
+
+        {showDelete && currentUser?.id == item?.userId && (
+          <View style={styles.actions}>
+            <TouchableOpacity onPress={() => onEditPost(item)}>
+              <Icon name="edit" size={hp(2.5)} color={colors.text} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleDeletePost}>
+              <Icon name="delete" size={hp(2.5)} color={colors.error} />
+            </TouchableOpacity>
+          </View>
         )}
       </View>
       <View style={styles.content}>
@@ -273,7 +307,9 @@ const PostCard = ({
           <Pressable onPress={() => openPostDetails()}>
             <Icon name="comment" size={24} color={colors.text} />
           </Pressable>
-          <Text style={styles.count}>{item?.comments[0]?.count}</Text>
+          {item?.comments && (
+            <Text style={styles.count}>{item?.comments[0]?.count}</Text>
+          )}
         </View>
         <View style={styles.footerButton}>
           <TouchableOpacity onPress={() => onShare()}>
@@ -291,6 +327,7 @@ const createStyles = colors =>
   StyleSheet.create({
     container: {
       gap: 10,
+
       marginBottom: 15,
       borderRadius: 22,
       borderCurve: 'continuous',

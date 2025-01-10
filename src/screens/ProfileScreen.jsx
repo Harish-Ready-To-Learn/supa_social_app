@@ -1,25 +1,97 @@
 import {
   Alert,
+  FlatList,
   Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import ScreenWrapper from '../components/common/ScreenWrapper';
-import {useTheme} from '@react-navigation/native';
+import {useIsFocused, useTheme} from '@react-navigation/native';
 import {useAuth} from '../context/AuthContext';
 import Header from '../components/common/Header';
 import {hp, wp} from '../helpers/common';
 import Icon from '../assets/icons';
 import {supabase} from '../lib/supabase';
 import Avatar from '../components/common/Avatar';
+import {fetchPosts} from '../services/postService';
+import Loading from '../components/common/Loading';
+import PostCard from '../components/home/PostCard';
+
+var limit = 0;
 
 const ProfileScreen = ({navigation}) => {
+  const isFocused = useIsFocused();
+
   const {colors} = useTheme();
   const {user, setAuth} = useAuth();
+  const [posts, setPosts] = useState([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [visibleItem, setVisibleItem] = useState(null);
+
   const [loading, setLoading] = useState(false);
+
+  const viewabilityConfig = {itemVisiblePercentThreshold: 250};
+
+  const handlePostEvent = async payload => {
+    if (payload.eventType == 'INSERT' && payload?.new?.id) {
+      let newPost = {...payload.new};
+      let res = await getUserData(newPost.userId);
+      newPost.user = res.success ? res.data : {};
+      newPost.postLikes = [];
+      setPosts(prevPosts => [newPost, ...prevPosts]);
+    }
+    if (payload.eventType == 'DELETE' && payload?.old?.id) {
+      setPosts(prevPosts => {
+        prevPosts = prevPosts.filter(post => post.id != payload?.old?.id);
+        return prevPosts;
+      });
+    }
+    if (payload.eventType == 'UPDATE' && payload?.old?.id) {
+      setPosts(prevPosts => {
+        let updatedPosts = prevPosts.map(post => {
+          if (post.id == payload?.old?.id) {
+            post.body = payload?.new?.body;
+            post.file = payload?.new?.file;
+          }
+          return post;
+        });
+        return updatedPosts;
+      });
+    }
+  };
+
+  useEffect(() => {
+    let postChannel = supabase
+      .channel('posts')
+      .on(
+        'postgres_changes',
+        {event: '*', schema: 'public', table: 'posts'},
+        handlePostEvent,
+      )
+      .subscribe();
+
+    getPosts();
+
+    return () => {
+      supabase.removeChannel(postChannel);
+    };
+  }, []);
+
+  const getPosts = async () => {
+    if (!hasMore) return null;
+    limit = limit + 10;
+
+    let {success, data} = await fetchPosts(limit, user.id);
+
+    if (success) {
+      if (posts.length == data.length) setHasMore(false);
+      setPosts(data);
+    }
+    setLoading(false);
+  };
 
   const onLogout = async () => {
     setLoading(true);
@@ -49,6 +121,12 @@ const ProfileScreen = ({navigation}) => {
       },
     ]);
   };
+
+  const onViewableItemsChanged = useRef(({viewableItems}) => {
+    if (viewableItems.length > 0) {
+      setVisibleItem(viewableItems[0]?.item?.id); // Set the first visible item
+    }
+  }).current;
 
   const UserHeader = ({user}) => {
     return (
@@ -130,7 +208,40 @@ const ProfileScreen = ({navigation}) => {
   return (
     <ScreenWrapper bg={colors.background}>
       <View style={[styles.container, {}]}>
-        <UserHeader user={user} />
+        <FlatList
+          data={posts}
+          showsVerticalScrollIndicator={false}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
+          decelerationRate="normal"
+          contentContainerStyle={styles.listStyle}
+          keyExtractor={item => item.id.toString()}
+          renderItem={({item}) => (
+            <PostCard
+              item={item}
+              currentUser={user}
+              navigation={navigation}
+              isVisible={item.id === visibleItem}
+              isScreenFocused={isFocused}
+            />
+          )}
+          ListHeaderComponent={<UserHeader user={user} />}
+          ListHeaderComponentStyle={{marginBottom: 30}}
+          ListFooterComponent={
+            hasMore ? (
+              <View style={{marginVertical: 30}}>
+                <Loading />
+              </View>
+            ) : (
+              <View style={{marginVertical: 30}}>
+                <Text style={styles.noPosts}>No More Posts...!</Text>
+              </View>
+            )
+          }
+          onEndReached={() => {
+            getPosts();
+          }}
+        />
       </View>
     </ScreenWrapper>
   );

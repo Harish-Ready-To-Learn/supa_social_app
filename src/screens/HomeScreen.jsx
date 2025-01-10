@@ -43,6 +43,24 @@ const HomeScreen = ({navigation}) => {
       newPost.postLikes = [];
       setPosts(prevPosts => [newPost, ...prevPosts]);
     }
+    if (payload.eventType == 'DELETE' && payload?.old?.id) {
+      setPosts(prevPosts => {
+        prevPosts = prevPosts.filter(post => post.id != payload?.old?.id);
+        return prevPosts;
+      });
+    }
+    if (payload.eventType == 'UPDATE' && payload?.old?.id) {
+      setPosts(prevPosts => {
+        let updatedPosts = prevPosts.map(post => {
+          if (post.id == payload?.old?.id) {
+            post.body = payload?.new?.body;
+            post.file = payload?.new?.file;
+          }
+          return post;
+        });
+        return updatedPosts;
+      });
+    }
   };
 
   useEffect(() => {

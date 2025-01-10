@@ -1,4 +1,4 @@
-import {Pressable, StyleSheet, Text, View} from 'react-native';
+import {Alert, Pressable, StyleSheet, Text, View} from 'react-native';
 import React from 'react';
 import {useTheme} from '@react-navigation/native';
 import {hp} from '../../helpers/common';
@@ -6,10 +6,26 @@ import Avatar from '../common/Avatar';
 import moment from 'moment';
 import Icon from '../../assets/icons';
 
-const CommentItem = ({item, canDelete = false}) => {
+const CommentItem = ({item, canDelete = false, onDelete = () => {}}) => {
   const {colors} = useTheme();
   const styles = createStyles(colors);
   const createdAt = moment(item?.created_at).format('MMM d');
+
+  const handleDeleteComment = () => {
+    Alert.alert('Confirm', 'Are you sure you want to delete the comment?', [
+      {
+        text: 'Cancel',
+        onPress: () => {},
+        style: 'cancel',
+      },
+      {
+        text: 'yes',
+        onPress: () => onDelete(item),
+        style: 'destructive',
+      },
+    ]);
+  };
+
   return (
     <View style={styles.container}>
       <Avatar uri={item?.user?.image} size={hp(4)} />
@@ -28,7 +44,7 @@ const CommentItem = ({item, canDelete = false}) => {
             </Text>
           </View>
           {canDelete && (
-            <Pressable>
+            <Pressable onPress={handleDeleteComment}>
               <Icon name="delete" size={18} color={colors.error} />
             </Pressable>
           )}

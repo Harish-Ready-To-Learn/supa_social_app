@@ -7,9 +7,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import ScreenWrapper from '../components/common/ScreenWrapper';
-import {useTheme} from '@react-navigation/native';
+import {useRoute, useTheme} from '@react-navigation/native';
 import {hp, wp} from '../helpers/common';
 import Header from '../components/common/Header';
 import {useAuth} from '../context/AuthContext';
@@ -24,6 +24,8 @@ import {createOrUpdatePost} from '../services/postService';
 import {getUserImageSource} from '../services/imageService';
 
 const CreatePostScreen = ({navigation}) => {
+  const route = useRoute();
+
   const {colors} = useTheme();
   const styles = createStyles(colors);
   const {user, setAuth, setUserData} = useAuth();
@@ -32,6 +34,16 @@ const CreatePostScreen = ({navigation}) => {
   const editorRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState(file);
+
+  useEffect(() => {
+    if (route?.params?.post && route?.params?.post.id) {
+      bodyRef.current = route?.params?.post.body;
+      setFile(route?.params?.post.file || null);
+      setTimeout(() => {
+        editorRef.current?.setContentHTML(bodyRef.current);
+      }, 1000);
+    }
+  }, []);
 
   const onPick = async isImage => {
     const options = {
@@ -87,6 +99,8 @@ const CreatePostScreen = ({navigation}) => {
       body: bodyRef.current,
       userId: user?.id,
     };
+    if (route?.params?.post && route?.params?.post.id)
+      data.id = route?.params?.post.id;
     setLoading(true);
     const result = await createOrUpdatePost(data);
     setLoading(false);
@@ -182,7 +196,9 @@ const CreatePostScreen = ({navigation}) => {
         </ScrollView>
         <CustomButton
           buttonStyle={{height: hp(6.2)}}
-          title="Post"
+          title={
+            route?.params?.post && route?.params?.post.id ? 'Update' : 'Post'
+          }
           loading={loading}
           onPress={onSubmit}
           hasShadow={false}

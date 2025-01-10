@@ -10,7 +10,12 @@ import {
 import React, {useEffect, useRef, useState} from 'react';
 import {useIsFocused, useRoute, useTheme} from '@react-navigation/native';
 import {hp, wp} from '../helpers/common';
-import {createComment, fetchPostDetails} from '../services/postService';
+import {
+  createComment,
+  deleteComment,
+  deletePost,
+  fetchPostDetails,
+} from '../services/postService';
 import PostCard from '../components/home/PostCard';
 import {useAuth} from '../context/AuthContext';
 import Loading from '../components/common/Loading';
@@ -19,6 +24,8 @@ import Icon from '../assets/icons';
 import {count} from 'console';
 import CommentItem from '../components/postDetails/CommentItem';
 import ScreenWrapper from '../components/common/ScreenWrapper';
+import {supabase} from '../lib/supabase';
+import {getUserData} from '../services/userService';
 
 const PostDetailsScreen = ({navigation}) => {
   const route = useRoute();
@@ -33,8 +40,40 @@ const PostDetailsScreen = ({navigation}) => {
 
   const {user, setAuth} = useAuth();
 
+  const handlePostEvent = async payload => {
+    if (payload?.new) {
+      let newComment = {...payload.new};
+      let res = await getUserData(newComment.userId);
+      newComment.user = res.success ? res.data : {};
+      setPost(prevPost => {
+        return {
+          ...prevPost,
+          comments: [newComment, ...prevPost.comments],
+        };
+      });
+    }
+  };
+
   useEffect(() => {
+    let commentChannel = supabase
+      .channel('comments')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'comments',
+          filter: `postId=eq.${route.params?.postId}`,
+        },
+        handlePostEvent,
+      )
+      .subscribe();
+
     getPostDetails();
+
+    return () => {
+      supabase.removeChannel(commentChannel);
+    };
   }, []);
 
   const getPostDetails = async () => {
@@ -60,6 +99,34 @@ const PostDetailsScreen = ({navigation}) => {
     } else {
       Alert.alert('Comment', 'Could not post the comment.');
     }
+  };
+
+  const onDeleteComment = async comment => {
+    const res = await deleteComment(comment?.id);
+    if (res.success) {
+      setPost(prevPost => {
+        let updatedPost = {...prevPost};
+        updatedPost.comments = updatedPost.comments.filter(
+          c => c.id != comment.id,
+        );
+        return updatedPost;
+      });
+    } else {
+      Alert.alert('Comment', 'Could delete the comment.');
+    }
+  };
+
+  const onDeletePost = async post => {
+    const res = await deletePost(post?.id);
+    if (res.success) {
+      navigation.goBack();
+    } else {
+      Alert.alert('Post', 'Could delete the post.');
+    }
+  };
+  const onEditPost = async post => {
+    navigation.goBack();
+    navigation.navigate('CreatePostScreen', {post: {...post}});
   };
 
   if (loading) {
@@ -95,11 +162,21 @@ const PostDetailsScreen = ({navigation}) => {
           isVisible={true}
           isScreenFocused={isFocused}
           showMoreIcons={false}
+          showDelete={true}
+          onDeletePost={onDeletePost}
+          onEditPost={onEditPost}
         />
 
         <View style={{marginVertical: 15, gap: 17, marginBottom: 120}}>
           {post?.comments?.map(comment => (
-            <CommentItem key={comment?.id?.toString()} item={comment} />
+            <CommentItem
+              key={comment?.id?.toString()}
+              item={comment}
+              canDelete={
+                user?.id == comment?.userId || user?.id == post?.userId
+              }
+              onDelete={onDeleteComment}
+            />
           ))}
         </View>
       </ScrollView>
