@@ -15,6 +15,7 @@ const lightTheme = {
     onError: '#FFFFFF', // Color used on error background
     buttonBackground: 'rgba(0,0,0,0.07)',
     placeHolderTextcolor: '#7C7C7C',
+    commentBg: 'rgba(0,0,0,0.06)',
   },
 };
 
@@ -35,6 +36,7 @@ const darkTheme = {
     onError: '#601410', // Color used on error background in dark theme
     buttonBackground: 'rgba(255, 255, 255, 0.1)',
     placeHolderTextcolor: '#A3A3A3',
+    commentBg: 'rgba(0,0,0,0.4)',
   },
 };
 

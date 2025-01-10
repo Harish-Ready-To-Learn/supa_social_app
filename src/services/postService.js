@@ -148,7 +148,8 @@ export const fetchPosts = async (limit = 10) => {
         `
         *,
         user: users (id, name, image),
-        postLikes (*)
+        postLikes (*),
+        comments (count)
         `,
       )
       .order('created_at', {ascending: false})
@@ -217,10 +218,12 @@ export const fetchPostDetails = async postId => {
         `
         *,
         user: users (id, name, image),
-        postLikes (*)
+        postLikes (*),
+        comments (*, user: users(id, name, image))
         `,
       )
       .eq('id', postId)
+      .order('created_at', {ascending: false, foreignTable: 'comments'})
       .single();
 
     if (error) {
@@ -233,5 +236,24 @@ export const fetchPostDetails = async postId => {
     console.log('got error while fetching Post details => ', error);
     console.log('====================================');
     return {success: false, msg: 'Could not fetch the post details.'};
+  }
+};
+
+export const createComment = async comment => {
+  try {
+    const {data, error} = await supabase
+      .from('comments')
+      .insert(comment)
+      .select()
+      .single();
+
+    if (error) {
+      console.log('Comment Error => ', error);
+      return {success: false, msg: 'Comment Error.'};
+    }
+    return {success: true, data: data};
+  } catch (error) {
+    console.log('Comment Error => ', error);
+    return {success: false, msg: 'Comment Error.'};
   }
 };
