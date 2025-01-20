@@ -31,6 +31,7 @@ const HomeScreen = ({navigation}) => {
   const [posts, setPosts] = useState([]);
   const [visibleItem, setVisibleItem] = useState(null);
   const [hasMore, setHasMore] = useState(true);
+  const [notificationCount, setNotificationCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const viewabilityConfig = {itemVisiblePercentThreshold: 250};
@@ -63,6 +64,12 @@ const HomeScreen = ({navigation}) => {
     }
   };
 
+  const handleNewNotification = async payload => {
+    if (payload.eventType == 'INSERT' && payload?.new?.id) {
+      setNotificationCount(prevCount => prevCount + 1);
+    }
+  };
+
   useEffect(() => {
     let postChannel = supabase
       .channel('posts')
@@ -73,10 +80,25 @@ const HomeScreen = ({navigation}) => {
       )
       .subscribe();
 
+    let notificationChannel = supabase
+      .channel('notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `receiverId=eq.${user?.id}`,
+        },
+        handleNewNotification,
+      )
+      .subscribe();
+
     getPosts();
 
     return () => {
       supabase.removeChannel(postChannel);
+      supabase.removeChannel(notificationChannel);
     };
   }, []);
 
@@ -105,13 +127,21 @@ const HomeScreen = ({navigation}) => {
           <Text style={[styles.title, {color: colors.text}]}>LinkUp</Text>
           <View style={styles.icons}>
             <Pressable
-              onPress={() => navigation.navigate('NotificationsScreen')}>
+              onPress={() => {
+                setNotificationCount(0);
+                navigation.navigate('NotificationsScreen');
+              }}>
               <Icon
                 name="heart"
                 size={hp(3.2)}
                 strokeWidth={2}
                 color={colors.text}
               />
+              {notificationCount > 0 && (
+                <View style={styles.pill}>
+                  <Text style={styles.pillText}>{notificationCount}</Text>
+                </View>
+              )}
             </Pressable>
             <Pressable onPress={() => navigation.navigate('CreatePostScreen')}>
               <Icon
@@ -200,5 +230,21 @@ const createStyles = colors =>
       fontSize: hp(2),
       textAlign: 'center',
       color: colors.text,
+    },
+    pill: {
+      position: 'absolute',
+      right: -10,
+      top: -4,
+      height: hp(2.2),
+      width: hp(2.2),
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 20,
+      backgroundColor: colors.error,
+    },
+    pillText: {
+      fontSize: hp(1.2),
+      color: colors.background,
+      fontWeight: '800',
     },
   });

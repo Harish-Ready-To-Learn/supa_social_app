@@ -26,6 +26,8 @@ import CommentItem from '../components/postDetails/CommentItem';
 import ScreenWrapper from '../components/common/ScreenWrapper';
 import {supabase} from '../lib/supabase';
 import {getUserData} from '../services/userService';
+import {create} from 'domain';
+import {createPostNotification} from '../services/notificationsService';
 
 const PostDetailsScreen = ({navigation}) => {
   const route = useRoute();
@@ -96,6 +98,15 @@ const PostDetailsScreen = ({navigation}) => {
     if (res.success) {
       commentRef.current = '';
       inputRef.current.clear();
+      if (user?.id != post?.userId) {
+        let notify = {
+          senderId: user?.id,
+          receiverId: post?.userId,
+          title: 'Commented on you post',
+          data: JSON.stringify({postId: post?.id, commentId: res?.data?.id}),
+        };
+        createPostNotification(notify);
+      }
     } else {
       Alert.alert('Comment', 'Could not post the comment.');
     }
@@ -176,6 +187,7 @@ const PostDetailsScreen = ({navigation}) => {
                 user?.id == comment?.userId || user?.id == post?.userId
               }
               onDelete={onDeleteComment}
+              highlight={comment?.id == route.params?.commentId}
             />
           ))}
         </View>

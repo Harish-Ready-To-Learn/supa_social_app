@@ -1,38 +1,76 @@
-import {
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import React, {useState} from 'react';
-import {wp} from '../helpers/common';
+import {StyleSheet, Text, View, ScrollView} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {useAuth} from '../context/AuthContext';
+import {fetchNotifications} from '../services/notificationsService';
+import {hp, wp} from '../helpers/common';
+import {useTheme} from '@react-navigation/native';
+import ScreenWrapper from '../components/common/ScreenWrapper';
+import NotificationItem from '../components/notifications/NotificationItem';
+import Header from '../components/common/Header';
 
 const NotificationsScreen = ({navigation}) => {
-  const [name, setName] = useState('');
+  const {colors} = useTheme();
+  const styles = createStyles(colors);
 
-  const goTo = () => {
-    console.log(name);
-    navigation.navigate('dummy', {name: name});
+  const [notifications, setNotifications] = useState([]);
+  const {user, setAuth} = useAuth();
+
+  useEffect(() => {
+    getNotifications();
+  }, []);
+
+  const getNotifications = async () => {
+    let res = await fetchNotifications(user.id);
+    if (res.success) {
+      setNotifications(res.data);
+    }
   };
 
   return (
-    <View style={{alignItems: 'center', justifyContent: 'center', flex: 1}}>
-      <TextInput
-        style={{borderWidth: 1, height: 30, width: wp(100)}}
-        onChangeText={setName}
-        value={name}
-      />
-      <TouchableOpacity
-        onPress={() => {
-          goTo();
-        }}>
-        <Text>Click here</Text>
-      </TouchableOpacity>
-    </View>
+    <ScreenWrapper bg={colors.commentBg}>
+      <View style={styles.contianer}>
+        <Header
+          title="Notifications"
+          onBackButtonPress={() => navigation.goBack()}
+          mb={30}
+        />
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listStyle}>
+          {notifications.map(item => {
+            return (
+              <NotificationItem
+                item={item}
+                key={item?.id}
+                navigation={navigation}
+              />
+            );
+          })}
+          {!notifications.length && (
+            <Text style={styles.noData}>No Notifications Yet</Text>
+          )}
+        </ScrollView>
+      </View>
+    </ScreenWrapper>
   );
 };
 
 export default NotificationsScreen;
 
-const styles = StyleSheet.create({});
+const createStyles = colors =>
+  StyleSheet.create({
+    contianer: {
+      flex: 1,
+      paddingHorizontal: wp(4),
+    },
+    listStyle: {
+      paddingVertical: 20,
+      gap: 10,
+    },
+    noData: {
+      fontSize: hp(1.8),
+      fontWeight: '600',
+      color: colors.text,
+      textAlign: 'center',
+    },
+  });

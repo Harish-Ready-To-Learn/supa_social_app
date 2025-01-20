@@ -1,15 +1,27 @@
 import {Alert, Pressable, StyleSheet, Text, View} from 'react-native';
-import React from 'react';
+import React, {useState} from 'react';
 import {useTheme} from '@react-navigation/native';
 import {hp} from '../../helpers/common';
 import Avatar from '../common/Avatar';
 import moment from 'moment';
 import Icon from '../../assets/icons';
 
-const CommentItem = ({item, canDelete = false, onDelete = () => {}}) => {
+const CommentItem = ({
+  item,
+  canDelete = false,
+  onDelete = () => {},
+  highlight = false,
+}) => {
   const {colors} = useTheme();
   const styles = createStyles(colors);
   const createdAt = moment(item?.created_at).format('MMM d');
+  const [highlightState, setHighlightState] = useState(highlight);
+
+  setTimeout(() => {
+    if (highlightState) {
+      setHighlightState(false);
+    }
+  }, 2000);
 
   const handleDeleteComment = () => {
     Alert.alert('Confirm', 'Are you sure you want to delete the comment?', [
@@ -29,7 +41,7 @@ const CommentItem = ({item, canDelete = false, onDelete = () => {}}) => {
   return (
     <View style={styles.container}>
       <Avatar uri={item?.user?.image} size={hp(4)} />
-      <View style={styles.content}>
+      <View style={[styles.content, highlightState && styles.highlight]}>
         <View
           style={{
             flexDirection: 'row',

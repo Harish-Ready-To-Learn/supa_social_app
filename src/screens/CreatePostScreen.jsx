@@ -53,8 +53,8 @@ const CreatePostScreen = ({navigation}) => {
     };
 
     if (isImage) {
-      options.width = 300;
-      options.height = 400;
+      // options.width = 300;
+      // options.height = 400;
       options.cropping = true;
     } else {
     }
