@@ -16,6 +16,7 @@ import CreatePostScreen from '../screens/CreatePostScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import Dummy from '../screens/Dummy';
 import PostDetailsScreen from '../screens/PostDetailsScreen';
+import TimerAppScreen from '../screens/TimerAppScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -74,7 +75,7 @@ const AuthNavigator = () => {
       screenOptions={{
         headerShown: false,
       }}
-      initialRouteName={isLoggedIn ? 'HomeScreen' : 'WelcomeScreen'}>
+      initialRouteName={isLoggedIn ? 'TimerAppScreen' : 'TimerAppScreen'}>
       <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} />
       <Stack.Screen name="LoginScreen" component={LoginScreen} />
       <Stack.Screen name="SignupScreen" component={SignupScreen} />
@@ -93,7 +94,9 @@ const AuthNavigator = () => {
           presentation: 'modal',
         }}
       />
+
       <Stack.Screen name="dummy" component={Dummy} />
+      <Stack.Screen name="TimerAppScreen" component={TimerAppScreen} />
     </Stack.Navigator>
   );
 };
